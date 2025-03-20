@@ -23,9 +23,7 @@ Route::resource('marcas', MarcasController::class);
 Route::resource('articulos', ArticuloController::class);
 
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+Route::get('/', [App\Http\Controllers\WelcomeController::class, 'index'])->name('welcome');
 
 
 Route::get('/dashboard', function () {

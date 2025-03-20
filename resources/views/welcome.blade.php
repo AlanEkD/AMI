@@ -20,9 +20,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div>
-        @livewire('dashboard-stats')
-    </div>
+    
     <!-- Navigation Bar -->
     <nav class="bg-primary text-white shadow-lg">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -33,7 +31,7 @@
                 <span class="text-xl font-bold">AMI</span>
             </div>
             <div class="hidden md:flex space-x-8">
-                <a href="#" class="hover:text-accent transition">Inicio</a>
+                <a href="{{ route('welcome') }}" class="hover:text-accent transition">Inicio</a>
                 <a href="{{ route('articulos.index') }}" class="hover:text-accent transition">Artículos</a>
                 <a href="{{ route('marcas.index') }}" class="hover:text-accent transition">Marcas</a>
                 <a href="{{ route('modelos.index') }}" class="hover:text-accent transition">Modelos</a>

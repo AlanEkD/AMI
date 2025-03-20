@@ -30,7 +30,7 @@
                 <span class="text-xl font-bold"></span>
             </div>
             <div class="hidden md:flex space-x-8">
-                <a href="/" class="hover:text-accent transition">Inicio</a>
+                <a href="{{ route('welcome') }}" class="hover:text-accent transition">Inicio</a>
                 <a href="{{ route('articulos.index') }}" class="hover:text-accent transition">Artículos</a>
                 <a href="{{ route('marcas.index') }}" class="hover:text-accent transition">Marcas</a>
                 <a href="{{ route('modelos.index') }}" class="hover:text-accent transition">Modelos</a>

@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ArticuloController;
 use App\Http\Controllers\MarcasController;
 use App\Http\Controllers\ModelosController;
-
+use App\Http\Controllers\UbicacionController;
 
 // En routes/web.php
 Route::get('/articulos/export', [App\Http\Controllers\ArticuloController::class, 'export'])
@@ -15,6 +15,8 @@ Route::get('/articulos/export', [App\Http\Controllers\ArticuloController::class,
 Route::get('/AMI-dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
 Route::resource('modelos', ModelosController::class);
+
+Route::resource('ubicaciones', UbicacionController::class);
 
 
 Route::resource('marcas', MarcasController::class);

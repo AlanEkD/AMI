@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Articulo extends Model
 {
     use SoftDeletes;
+    use HasFactory;
+    
     public const ESTADO_DISPONIBLE = 'Disponible';
     public const ESTADO_ASIGNADO = 'Asignado';
     public const ESTADO_REPARACION = 'En reparación';
@@ -21,9 +24,29 @@ class Articulo extends Model
         self::ESTADO_BAJA
     ];
 
-    use HasFactory;
+    protected $fillable = [
+        'modelo_id', 
+        'identificador',
+        'numero_serie', 
+        'estado', 
+        'ubicacion_id', 
+        'fecha_ingreso',
+        'empaque_original'
+    ];
 
-    protected $fillable = ['modelo_id', 'numero_serie', 'estado', 'ubicacion_id', 'fecha_ingreso'];
+    protected $dates = ['fecha_ingreso'];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Generar un identificador único al crear un nuevo artículo si no se proporciona uno
+        static::creating(function ($articulo) {
+            if (!$articulo->identificador) {
+                $articulo->identificador = 'AMI-' . date('Ymd') . '-' . strtoupper(Str::random(5));
+            }
+        });
+    }
 
     // Relación: Un artículo pertenece a un modelo
     public function modelo()
@@ -43,34 +66,35 @@ class Articulo extends Model
         return $this->hasMany(Movimiento::class);
     }
 
-    // Añade estos métodos scope dentro de la clase Articulo
-public function scopeSearch($query, $search)
-{
-    return $query->where(function($q) use ($search) {
-        $q->where('numero_serie', 'like', "%{$search}%")
-          ->orWhereHas('modelo', function($subQ) use ($search) {
-              $subQ->where('nombre', 'like', "%{$search}%");
-          })
-          ->orWhereHas('modelo.marca', function($subQ) use ($search) {
-              $subQ->where('nombre', 'like', "%{$search}%");
-          });
-    });
-}
+    // Métodos de consulta (scopes)
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function($q) use ($search) {
+            $q->where('identificador', 'like', "%{$search}%")
+              ->orWhere('numero_serie', 'like', "%{$search}%")
+              ->orWhereHas('modelo', function($subQ) use ($search) {
+                  $subQ->where('nombre', 'like', "%{$search}%");
+              })
+              ->orWhereHas('modelo.marca', function($subQ) use ($search) {
+                  $subQ->where('nombre', 'like', "%{$search}%");
+              });
+        });
+    }
 
-public function scopeEstado($query, $estado)
-{
-    return $query->where('estado', $estado);
-}
+    public function scopeEstado($query, $estado)
+    {
+        return $query->where('estado', $estado);
+    }
 
-public function scopeMarca($query, $marcaId)
-{
-    return $query->whereHas('modelo', function($q) use ($marcaId) {
-        $q->where('marca_id', $marcaId);
-    });
-}
+    public function scopeMarca($query, $marcaId)
+    {
+        return $query->whereHas('modelo', function($q) use ($marcaId) {
+            $q->where('marca_id', $marcaId);
+        });
+    }
 
-public function scopeUbicacion($query, $ubicacionId)
-{
-    return $query->where('ubicacion_id', $ubicacionId);
-}
+    public function scopeUbicacion($query, $ubicacionId)
+    {
+        return $query->where('ubicacion_id', $ubicacionId);
+    }
 }

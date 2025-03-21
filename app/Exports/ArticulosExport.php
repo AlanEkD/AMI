@@ -28,11 +28,13 @@ class ArticulosExport
         // Añadir encabezados
         fputcsv($output, [
             'ID',
+            'Identificador',
             'Modelo',
             'Marca',
             'Número de Serie',
             'Estado',
             'Ubicación',
+            'Empaque Original',
             'Fecha de Ingreso',
             'Última Actualización'
         ], ';');
@@ -43,32 +45,22 @@ class ArticulosExport
         // Filtro de búsqueda
         if (!empty($this->filters['search'])) {
             $search = $this->filters['search'];
-            $query->where(function($q) use ($search) {
-                $q->whereHas('modelo', function($subQ) use ($search) {
-                    $subQ->where('nombre', 'like', "%{$search}%");
-                })
-                ->orWhereHas('modelo.marca', function($subQ) use ($search) {
-                    $subQ->where('nombre', 'like', "%{$search}%");
-                })
-                ->orWhere('numero_serie', 'like', "%{$search}%");
-            });
+            $query->search($search);
         }
         
         // Filtro por estado
         if (!empty($this->filters['estado'])) {
-            $query->where('estado', $this->filters['estado']);
+            $query->estado($this->filters['estado']);
         }
         
         // Filtro por ubicación
         if (!empty($this->filters['ubicacion_id'])) {
-            $query->where('ubicacion_id', $this->filters['ubicacion_id']);
+            $query->ubicacion($this->filters['ubicacion_id']);
         }
         
         // Filtro por marca
         if (!empty($this->filters['marca_id'])) {
-            $query->whereHas('modelo', function($q) {
-                $q->where('marca_id', $this->filters['marca_id']);
-            });
+            $query->marca($this->filters['marca_id']);
         }
         
         // Ordenar por
@@ -83,11 +75,13 @@ class ArticulosExport
             // Mapear cada artículo a una fila del CSV
             fputcsv($output, [
                 $articulo->id,
+                $articulo->identificador ?? 'N/A',
                 $articulo->modelo ? $articulo->modelo->nombre : 'N/A',
                 $articulo->modelo && $articulo->modelo->marca ? $articulo->modelo->marca->nombre : 'Sin marca',
                 $articulo->numero_serie ?? 'N/A',
                 $articulo->estado,
                 $articulo->ubicacion ? $articulo->ubicacion->nombre : 'Sin ubicación',
+                $articulo->empaque_original ? 'Sí' : 'No',
                 $articulo->fecha_ingreso ? $articulo->fecha_ingreso->format('d/m/Y') : 'N/A',
                 $articulo->updated_at ? $articulo->updated_at->format('d/m/Y H:i:s') : 'N/A'
             ], ';');

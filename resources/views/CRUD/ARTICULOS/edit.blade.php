@@ -72,6 +72,13 @@
     <div class="flex justify-center items-center p-6">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Editar Artículo</h2>
+            
+            <!-- Mostrar identificador del artículo -->
+            <div class="text-center mb-4">
+                <span class="bg-gray-200 text-gray-800 text-sm font-medium px-3 py-1 rounded-full">
+                    ID: {{ $articulo->identificador }}
+                </span>
+            </div>
 
             <!-- Mostrar errores si existen -->
             @if ($errors->any())
@@ -138,8 +145,16 @@
                 <!-- Fecha de Ingreso -->
                 <label class="block">
                     <span class="text-gray-700">Fecha de Ingreso:</span>
-                    <input type="date" name="fecha_ingreso" value="{{ old('fecha_ingreso', $articulo->fecha_ingreso) }}" 
+                    <input type="date" name="fecha_ingreso" value="{{ old('fecha_ingreso', $articulo->fecha_ingreso->format('Y-m-d')) }}" 
                         required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </label>
+
+                <!-- Empaque Original -->
+                <label class="flex items-center">
+                    <input type="checkbox" name="empaque_original" 
+                        {{ old('empaque_original', $articulo->empaque_original) ? 'checked' : '' }}
+                        class="rounded border-gray-300 text-blue-500 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    <span class="ml-2 text-gray-700">Empaque Original</span>
                 </label>
 
                 <!-- Botones -->

@@ -65,6 +65,15 @@ class MarcasController extends Controller
             $marca->save();
             
             DB::commit();
+            
+            // Verificar si es una solicitud AJAX (desde el modal en creación de artículos)
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'marca' => $marca
+                ]);
+            }
+            
             return redirect()->route('marcas.index')->with('success', 'Marca creada correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -72,6 +81,14 @@ class MarcasController extends Controller
             // Si hubo un error y se subió un logo, eliminar el archivo
             if (isset($marca->logo) && Storage::disk('public')->exists($marca->logo)) {
                 Storage::disk('public')->delete($marca->logo);
+            }
+            
+            // Si es una solicitud AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al crear la marca: ' . $e->getMessage()
+                ], 422);
             }
             
             return redirect()->back()

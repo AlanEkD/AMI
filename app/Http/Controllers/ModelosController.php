@@ -59,15 +59,41 @@ class ModelosController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255|unique:modelos,nombre,NULL,id,marca_id,' . $request->marca_id,
+            'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             'marca_id' => 'required|exists:marcas,id'
         ]);
 
         try {
-            Modelo::create($validated);
+            // Verificar si ya existe un modelo con el mismo nombre y marca
+            $existingModel = Modelo::where('nombre', $validated['nombre'])
+                                    ->where('marca_id', $validated['marca_id'])
+                                    ->first();
+            
+            if ($existingModel) {
+                $modelo = $existingModel;
+            } else {
+                $modelo = Modelo::create($validated);
+            }
+            
+            // Verificar si es una solicitud AJAX (desde el modal en creación de artículos)
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'modelo' => $modelo
+                ]);
+            }
+            
             return redirect()->route('modelos.index')->with('success', 'Modelo agregado correctamente.');
         } catch (\Exception $e) {
+            // Si es una solicitud AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al crear el modelo: ' . $e->getMessage()
+                ], 422);
+            }
+            
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error al crear el modelo: ' . $e->getMessage());
@@ -90,12 +116,24 @@ class ModelosController extends Controller
     public function update(Request $request, Modelo $modelo)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255|unique:modelos,nombre,' . $modelo->id . ',id,marca_id,' . $request->marca_id,
+            'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             'marca_id' => 'required|exists:marcas,id'
         ]);
 
         try {
+            // Verificar si ya existe otro modelo con el mismo nombre y marca (distinto al actual)
+            $existingModel = Modelo::where('nombre', $validated['nombre'])
+                                    ->where('marca_id', $validated['marca_id'])
+                                    ->where('id', '!=', $modelo->id)
+                                    ->first();
+            
+            if ($existingModel) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Ya existe un modelo con el mismo nombre para esta marca.');
+            }
+            
             $modelo->update($validated);
             return redirect()->route('modelos.index')->with('success', 'Modelo actualizado correctamente.');
         } catch (\Exception $e) {

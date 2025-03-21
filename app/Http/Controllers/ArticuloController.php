@@ -9,7 +9,6 @@ use App\Models\Ubicacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Exports\ArticulosExport;
-use Maatwebsite\Excel\Facades\Excel;
 
 class ArticuloController extends Controller
 {
@@ -23,32 +22,22 @@ class ArticuloController extends Controller
         // Filtro de búsqueda
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->whereHas('modelo', function($subQ) use ($search) {
-                    $subQ->where('nombre', 'like', "%{$search}%");
-                })
-                ->orWhereHas('modelo.marca', function($subQ) use ($search) {
-                    $subQ->where('nombre', 'like', "%{$search}%");
-                })
-                ->orWhere('numero_serie', 'like', "%{$search}%");
-            });
+            $query->search($search);
         }
         
         // Filtro por estado
         if ($request->has('estado') && !empty($request->estado)) {
-            $query->where('estado', $request->estado);
+            $query->estado($request->estado);
         }
         
         // Filtro por ubicación
         if ($request->has('ubicacion_id') && !empty($request->ubicacion_id)) {
-            $query->where('ubicacion_id', $request->ubicacion_id);
+            $query->ubicacion($request->ubicacion_id);
         }
         
         // Filtro por marca
         if ($request->has('marca_id') && !empty($request->marca_id)) {
-            $query->whereHas('modelo', function($q) use ($request) {
-                $q->where('marca_id', $request->marca_id);
-            });
+            $query->marca($request->marca_id);
         }
         
         // Ordenar por
@@ -103,6 +92,7 @@ class ArticuloController extends Controller
             'estado' => 'required|in:Disponible,Asignado,En reparación,Baja',
             'ubicacion_id' => 'nullable|exists:ubicaciones,id',
             'fecha_ingreso' => 'required|date',
+            'empaque_original' => 'boolean',
         ]);
 
         DB::beginTransaction();
@@ -124,6 +114,7 @@ class ArticuloController extends Controller
                 'estado' => $validated['estado'],
                 'ubicacion_id' => $validated['ubicacion_id'],
                 'fecha_ingreso' => $validated['fecha_ingreso'],
+                'empaque_original' => $request->has('empaque_original'),
             ]);
             
             DB::commit();
@@ -165,10 +156,19 @@ class ArticuloController extends Controller
             'estado' => 'required|in:Disponible,Asignado,En reparación,Baja',
             'ubicacion_id' => 'nullable|exists:ubicaciones,id',
             'fecha_ingreso' => 'required|date',
+            'empaque_original' => 'boolean',
         ]);
 
         try {
-            $articulo->update($validated);
+            // Actualizar datos del artículo
+            $articulo->modelo_id = $validated['modelo_id'];
+            $articulo->numero_serie = $validated['numero_serie'];
+            $articulo->estado = $validated['estado'];
+            $articulo->ubicacion_id = $validated['ubicacion_id'];
+            $articulo->fecha_ingreso = $validated['fecha_ingreso'];
+            $articulo->empaque_original = $request->has('empaque_original');
+            $articulo->save();
+            
             return redirect()->route('articulos.index')->with('success', 'Artículo actualizado correctamente.');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -192,28 +192,25 @@ class ArticuloController extends Controller
     }
     
     /**
-     * Exporta la lista de artículos a Excel con los filtros aplicados.
+     * Exporta la lista de artículos a CSV con los filtros aplicados.
      */
-    /**
- * Exporta la lista de artículos a CSV con los filtros aplicados.
- */
-public function export(Request $request)
-{
-    // Reutilizamos los filtros de la petición actual
-    $filters = [
-        'search' => $request->get('search'),
-        'estado' => $request->get('estado'),
-        'ubicacion_id' => $request->get('ubicacion_id'),
-        'marca_id' => $request->get('marca_id'),
-        'order_by' => $request->get('order_by', 'created_at'),
-        'order' => $request->get('order', 'desc')
-    ];
-    
-    // Nombre del archivo con fecha y hora
-    $filename = 'inventario_ami_' . date('Y-m-d_H-i-s') . '.csv';
-    
-    // Usar la clase simplificada
-    $exporter = new \App\Exports\ArticulosExport($filters);
-    return $exporter->download($filename);
-}
+    public function export(Request $request)
+    {
+        // Reutilizamos los filtros de la petición actual
+        $filters = [
+            'search' => $request->get('search'),
+            'estado' => $request->get('estado'),
+            'ubicacion_id' => $request->get('ubicacion_id'),
+            'marca_id' => $request->get('marca_id'),
+            'order_by' => $request->get('order_by', 'created_at'),
+            'order' => $request->get('order', 'desc')
+        ];
+        
+        // Nombre del archivo con fecha y hora
+        $filename = 'inventario_ami_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        // Usar la clase simplificada
+        $exporter = new \App\Exports\ArticulosExport($filters);
+        return $exporter->download($filename);
+    }
 }

@@ -93,7 +93,7 @@
                             <option value="Disponible">Disponible</option>
                             <option value="Asignado">Asignado</option>
                             <option value="En reparación">En reparación</option>
-                            <option value="De baja">De baja</option>
+                            <option value="Baja">Baja</option>
                         </select>
                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 pointer-events-none">
                             <i class="fas fa-chevron-down"></i>
@@ -115,13 +115,13 @@
                     <thead>
                         <tr class="bg-gray-50 text-gray-700 text-sm uppercase tracking-wider">
                             <th class="px-4 py-3 text-left">ID</th>
-                            <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(1)">
+                            <th class="px-4 py-3 text-left">Identificador</th>
+                            <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(2)">
                                 Modelo <i class="fas fa-sort ml-1"></i>
                             </th>
-                            <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(2)">
+                            <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(3)">
                                 Marca <i class="fas fa-sort ml-1"></i>
                             </th>
-                            <th class="px-4 py-3 text-left">Descripción</th>
                             <th class="px-4 py-3 text-left">Número de Serie</th>
                             <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(5)">
                                 Estado <i class="fas fa-sort ml-1"></i>
@@ -129,8 +129,9 @@
                             <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(6)">
                                 Ubicación <i class="fas fa-sort ml-1"></i>
                             </th>
+                            <th class="px-4 py-3 text-center">Empaque</th>
                             <th class="px-4 py-3 text-center">Acciones</th>
-                            <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(8)">
+                            <th class="px-4 py-3 text-left cursor-pointer hover:text-accent" onclick="sortTable(9)">
                                 Fecha de Ingreso <i class="fas fa-sort ml-1"></i>
                             </th>
                         </tr>
@@ -139,9 +140,9 @@
                         @foreach ($articulos as $articulo)
                         <tr class="border-t border-gray-200 hover:bg-gray-50 transition-colors">
                             <td class="px-4 py-3 whitespace-nowrap">{{ $articulo->id }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap font-medium">{{ $articulo->identificador }}</td>
                             <td class="px-4 py-3 font-medium">{{ $articulo->modelo->nombre }}</td>
                             <td class="px-4 py-3">{{ $articulo->modelo->marca->nombre ?? 'Sin marca' }}</td>
-                            <td class="px-4 py-3 max-w-xs truncate">{{ $articulo->modelo->descripcion ?? 'Sin descripción' }}</td>
                             <td class="px-4 py-3">{{ $articulo->numero_serie ?? 'N/A' }}</td>
                             <td class="px-4 py-3">
                                 <span class="px-3 py-1 rounded text-white text-xs font-semibold
@@ -155,19 +156,26 @@
                             </td>
                             <td class="px-4 py-3">{{ $articulo->ubicacion->nombre ?? 'No asignada' }}</td>
                             <td class="px-4 py-3 text-center">
+                                @if($articulo->empaque_original)
+                                    <span class="text-green-500"><i class="fas fa-check-circle"></i></span>
+                                @else
+                                    <span class="text-red-500"><i class="fas fa-times-circle"></i></span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center items-center space-x-2">
                                     <a href="{{ route('articulos.edit', $articulo) }}" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <button 
                                         type="button" 
-                                        onclick="showDeleteModal({{ $articulo->id }}, '{{ $articulo->modelo->nombre }} - {{ $articulo->numero_serie }}')" 
+                                        onclick="showDeleteModal({{ $articulo->id }}, '{{ $articulo->identificador }}')" 
                                         class="bg-red-500 hover:bg-red-600 text-white p-2 rounded transition">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
-                            <td class="px-4 py-3">{{ $articulo->fecha_ingreso ?? 'No registrada' }}</td>
+                            <td class="px-4 py-3">{{ $articulo->fecha_ingreso->format('d/m/Y') }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -192,8 +200,10 @@
                 <div class="text-sm text-gray-600">
                     Mostrando <span class="font-medium">{{ count($articulos) }}</span> artículos
                 </div>
-                <!-- Si tienes paginación de Laravel, puedes usarla aquí -->
-                
+                <!-- Paginación de Laravel, si está disponible -->
+                @if(method_exists($articulos, 'links'))
+                    {{ $articulos->links() }}
+                @else
                 <!-- O bien, una paginación simulada -->
                 <div class="flex space-x-1">
                     <button class="px-3 py-1 bg-gray-200 text-gray-700 rounded-l hover:bg-gray-300 transition">
@@ -204,6 +214,7 @@
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
+                @endif
             </div>
         </div>
     </div>
@@ -241,9 +252,9 @@
         });
         
         // Delete modal functionality
-        function showDeleteModal(id, name) {
+        function showDeleteModal(id, identificador) {
             document.getElementById('deleteModal').classList.remove('hidden');
-            document.getElementById('articuloName').textContent = name;
+            document.getElementById('articuloName').textContent = identificador;
             document.getElementById('deleteForm').action = `/articulos/${id}`;
         }
         
@@ -269,14 +280,16 @@
             const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
             
             for (let i = 0; i < rows.length; i++) {
-                const modelo = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-                const marca = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                const identificador = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                const modelo = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                const marca = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
                 const serie = rows[i].getElementsByTagName('td')[4].textContent.toLowerCase();
                 const estado = rows[i].getElementsByTagName('td')[5].textContent.trim();
                 
-                const matchesSearch = modelo.includes(searchValue) || 
-                                    marca.includes(searchValue) || 
-                                    serie.includes(searchValue);
+                const matchesSearch = identificador.includes(searchValue) || 
+                                     modelo.includes(searchValue) || 
+                                     marca.includes(searchValue) || 
+                                     serie.includes(searchValue);
                                     
                 const matchesEstado = estadoValue === '' || estado === estadoValue;
                 

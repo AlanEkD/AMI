@@ -124,17 +124,18 @@
                 <!-- Número de Serie -->
                 <label class="block">
                     <span class="text-gray-700">Número de Serie (Opcional):</span>
-                    <input type="text" name="numero_serie" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    <input type="text" name="numero_serie" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                           value="{{ old('numero_serie') }}">
                 </label>
 
                 <!-- Estado -->
                 <label class="block">
                     <span class="text-gray-700">Estado:</span>
                     <select name="estado" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                        <option value="Disponible">Disponible</option>
-                        <option value="Asignado">Asignado</option>
-                        <option value="En reparación">En reparación</option>
-                        <option value="Baja">Baja</option>
+                        <option value="Disponible" {{ old('estado') == 'Disponible' ? 'selected' : '' }}>Disponible</option>
+                        <option value="Asignado" {{ old('estado') == 'Asignado' ? 'selected' : '' }}>Asignado</option>
+                        <option value="En reparación" {{ old('estado') == 'En reparación' ? 'selected' : '' }}>En reparación</option>
+                        <option value="Baja" {{ old('estado') == 'Baja' ? 'selected' : '' }}>Baja</option>
                     </select>
                 </label>
 
@@ -144,7 +145,9 @@
                     <select name="ubicacion_id" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
                         <option value="">Sin ubicación</option>
                         @foreach ($ubicaciones as $ubicacion)
-                            <option value="{{ $ubicacion->id }}">{{ $ubicacion->nombre }}</option>
+                            <option value="{{ $ubicacion->id }}" {{ old('ubicacion_id') == $ubicacion->id ? 'selected' : '' }}>
+                                {{ $ubicacion->nombre }}
+                            </option>
                         @endforeach
                     </select>
                 </label>
@@ -152,7 +155,15 @@
                 <!-- Fecha de Ingreso -->
                 <label class="block">
                     <span class="text-gray-700">Fecha de Ingreso:</span>
-                    <input type="date" name="fecha_ingreso" value="{{ date('Y-m-d') }}" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    <input type="date" name="fecha_ingreso" value="{{ old('fecha_ingreso', date('Y-m-d')) }}" required 
+                           class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                </label>
+
+                <!-- Empaque Original -->
+                <label class="flex items-center">
+                    <input type="checkbox" name="empaque_original" {{ old('empaque_original') ? 'checked' : '' }}
+                           class="rounded border-gray-300 text-blue-500 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    <span class="ml-2 text-gray-700">Empaque Original</span>
                 </label>
 
                 <!-- Botones -->
